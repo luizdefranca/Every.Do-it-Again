@@ -11,9 +11,10 @@ import CoreData
 
 class MasterViewController: UITableViewController, NSFetchedResultsControllerDelegate {
 
+    let addStoryBoard = UIStoryboard(name: "AddTodo", bundle: nil)
     var detailViewController: DetailViewController? = nil
     var managedObjectContext: NSManagedObjectContext? = nil
-
+    var todo = ToDo()
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -35,25 +36,7 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
 
     @objc
     func insertNewObject(_ sender: Any) {
-        let context = self.fetchedResultsController.managedObjectContext
-        let toDo = ToDo(context: context)
-             
-        // If appropriate, configure the new managed object.
-        toDo.priorityNumber = 0
-        toDo.isCompleted = false
-        toDo.title = String()
-        toDo.todoDescription = String()
-
-        // Save the context.
-        do {
-            try context.save()
-        } catch {
-            // Replace this implementation with code to handle the error appropriately.
-            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-            let nserror = error as NSError
-            print("\(self) - \(#function) - Error saving data - \(nserror.localizedDescription)")
-//            fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
-        }
+        showAddTodoViewController()
     }
 
     // MARK: - Segues
@@ -72,6 +55,18 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
 
     // MARK: - Table View
 
+    func showAddTodoViewController() {
+        let customAlert = self.addStoryBoard.instantiateViewController(withIdentifier: "AddTodoViewController") as! AddTodoViewController
+        customAlert.managedObjectContext = self.managedObjectContext
+        customAlert.providesPresentationContextTransitionStyle = true
+        customAlert.definesPresentationContext = true
+        customAlert.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
+        customAlert.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
+        customAlert.delegate = self
+        self.present(customAlert, animated: true, completion: nil)
+    }
+
+    
     override func numberOfSections(in tableView: UITableView) -> Int {
         return fetchedResultsController.sections?.count ?? 0
     }
@@ -113,7 +108,7 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
     func configureCell(_ cell: UITableViewCell, withTodo todo: ToDo) {
         if  let title = todo.title,  let todoDescription = todo.todoDescription {
             let priorityNumber = todo.priorityNumber
-            let isCompleted = todo.isCompleted
+            let isCompleted = todo.isCompleted 
              cell.textLabel!.text = "Priority: \(priorityNumber) - \(title)"
             cell.detailTextLabel!.text = todoDescription
         }
@@ -202,3 +197,21 @@ class MasterViewController: UITableViewController, NSFetchedResultsControllerDel
 
 }
 
+extension MasterViewController: AddTodoDelegate {
+    func addTodo(_ todo: ToDo) {
+        let context = self.fetchedResultsController.managedObjectContext
+//        var toDo = ToDo(context: context)
+//        self.todo = todo
+//        toDo = self.todo
+        // Save the context.
+        do {
+            try context.save()
+        } catch {
+            // Replace this implementation with code to handle the error appropriately.
+            // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
+            let nserror = error as NSError
+            print("\(self) - \(#function) - Error saving data - \(nserror.localizedDescription)")
+            //            fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
+        }
+    }
+}
